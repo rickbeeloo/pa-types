@@ -20,8 +20,12 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::fmt::Write;
 
+#[cfg(feature = "bitcode")]
+use bitcode::{Decode, Encode};
+
 use crate::*;
 
+#[cfg_attr(feature = "bitcode", derive(Encode, Decode))]
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum CigarOp {
     Match,
@@ -30,6 +34,7 @@ pub enum CigarOp {
     Ins,
 }
 
+#[cfg_attr(feature = "bitcode", derive(Encode, Decode))]
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum CigarOpChars {
     Match(u8),
@@ -39,6 +44,7 @@ pub enum CigarOpChars {
     Ins(u8),
 }
 
+#[cfg_attr(feature = "bitcode", derive(Encode, Decode))]
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
 pub struct CigarElem {
     pub op: CigarOp,
@@ -54,6 +60,7 @@ impl CigarElem {
 /// Types representation of a Cigar string.
 // This is similar to https://docs.rs/bio/1.0.0/bio/alignment/struct.Alignment.html,
 // but more specific for our use case.
+#[cfg_attr(feature = "bitcode", derive(Encode, Decode))]
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Default)]
 pub struct Cigar {
     pub ops: Vec<CigarElem>,
@@ -593,5 +600,14 @@ mod tests {
                 CigarOpChars::Ins(b'c'),
             ]
         );
+    }
+
+    #[cfg(feature = "bitcode")]
+    #[test]
+    fn test_bitcode() {
+        let c = Cigar::from_string("2=1X1I");
+        let encoded = bitcode::encode(&c);
+        let decoded = bitcode::decode(&encoded).unwrap();
+        assert_eq!(c, decoded);
     }
 }

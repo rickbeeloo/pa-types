@@ -13,5 +13,14 @@ categories = ["science"]
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 itertools = "0.14.0"
-derive_more = { version = "2.0.1", default-features = false, features = ["add", "add_assign"] }
+derive_more = { version = "2.0.1", default-features = false, features = [
+    "add",
+    "add_assign",
+] }
 clap = { version = "4.3.0", features = ["derive"], optional = true }
+bitcode = { version = "0.6.9", optional = true }
+
+
+[features]
+default = []
+bitcode = ["dep:bitcode"]
