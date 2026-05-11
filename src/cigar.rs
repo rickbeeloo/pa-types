@@ -690,6 +690,20 @@ mod tests {
     }
 
     #[test]
+    fn pop_front_existing() {
+        let mut c = Cigar::from_string("2=1X1I");
+        c.pop_front();
+        assert_eq!(c.to_string(), "1=1X1I");
+    }
+
+    #[test]
+    fn pop_front_single_element() {
+        let mut c = Cigar::from_string("1=1X1I");
+        c.pop_front();
+        assert_eq!(c.to_string(), "1X1I");
+    }
+
+    #[test]
     fn to_char_pairs_mixed() {
         let c = Cigar::from_string("2=1X1I");
         let pairs = c.to_char_pairs(b"abZd", b"abYc");
