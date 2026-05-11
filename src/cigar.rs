@@ -36,7 +36,6 @@ use bitcode::{Decode, Encode};
 
 use crate::*;
 
-#[cfg_attr(feature = "bitcode", derive(Encode, Decode))]
 /// A single cigar string character.
 #[cfg_attr(feature = "bitcode", derive(Encode, Decode))]
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
@@ -51,7 +50,6 @@ pub enum CigarOp {
     Ins,
 }
 
-#[cfg_attr(feature = "bitcode", derive(Encode, Decode))]
 /// A cigar string character with the corresponding characters from text and pattern.
 #[cfg_attr(feature = "bitcode", derive(Encode, Decode))]
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
@@ -66,7 +64,6 @@ pub enum CigarOpChars {
     Ins(u8),
 }
 
-#[cfg_attr(feature = "bitcode", derive(Encode, Decode))]
 /// A single repeated cigar element, e.g. `5=` or `3I`.
 #[cfg_attr(feature = "bitcode", derive(Encode, Decode))]
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
