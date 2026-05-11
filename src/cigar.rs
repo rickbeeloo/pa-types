@@ -309,14 +309,41 @@ impl Cigar {
         self.ops.push(CigarElem { op, cnt: 1 });
     }
 
+    /// Push a [`CigarOp`] to the start of the cigar.
+    pub fn push_front(&mut self, op: CigarOp) {
+        // If first element already is the same increment count
+        if let Some(s) = self.ops.first_mut() {
+            if s.op == op {
+                s.cnt += 1;
+                return;
+            }
+        }
+        // Otherwise insert new element at the start
+        self.ops.insert(0, CigarElem { op, cnt: 1 });
+    }
+
     /// Pop a single [`CigarOp`] from the cigar.
-    pub fn pop_op(&mut self) -> Option<CigarOp> {
+    pub fn pop(&mut self) -> Option<CigarOp> {
         while let Some(elem) = self.ops.last_mut() {
             let op = elem.op;
             assert!(elem.cnt > 0);
             elem.cnt -= 1;
             if elem.cnt == 0 {
                 self.ops.pop();
+            }
+            return Some(op);
+        }
+        None
+    }
+
+    /// Pop element from the beginning of the cigar.
+    pub fn pop_front(&mut self) -> Option<CigarOp> {
+        while let Some(elem) = self.ops.first_mut() {
+            let op = elem.op;
+            assert!(elem.cnt > 0);
+            elem.cnt -= 1;
+            if elem.cnt == 0 {
+                self.ops.remove(0);
             }
             return Some(op);
         }
@@ -649,6 +676,20 @@ mod tests {
     }
 
     #[test]
+    fn push_front_existing() {
+        let mut c = Cigar::from_string("2=1X1I");
+        c.push_front(CigarOp::Match);
+        assert_eq!(c.to_string(), "3=1X1I");
+    }
+
+    #[test]
+    fn push_front_new() {
+        let mut c = Cigar::from_string("2=1X1I");
+        c.push_front(CigarOp::Sub);
+        assert_eq!(c.to_string(), "1X2=1X1I");
+    }
+
+    #[test]
     fn to_char_pairs_mixed() {
         let c = Cigar::from_string("2=1X1I");
         let pairs = c.to_char_pairs(b"abZd", b"abYc");
@@ -662,7 +703,6 @@ mod tests {
             ]
         );
     }
-
     #[cfg(feature = "bitcode")]
     #[test]
     fn test_bitcode() {
