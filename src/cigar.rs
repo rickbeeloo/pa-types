@@ -513,6 +513,47 @@ impl Cigar {
     pub fn reverse(&mut self) {
         self.ops.reverse();
     }
+
+    /// Slice the cigar string between `start` and `end` (exclusive).
+    pub fn slice(&self, start: I, end: I) -> Self {
+        assert!(
+            start <= end,
+            "slice start ({}) must be <= end ({})",
+            start,
+            end
+        );
+
+        let mut result = Cigar::default();
+        let mut current_idx: I = 0; // current transition index
+
+        for elem in &self.ops {
+            let elem_start = current_idx;
+            let elem_end = current_idx + elem.cnt;
+
+            // Skip elements completely outside [start, end)
+            if elem_end <= start || elem_start >= end {
+                current_idx = elem_end;
+                continue;
+            }
+
+            // Calculate overlap: [max(start, elem_start), min(end, elem_end))
+            let overlap_start = start.max(elem_start);
+            let overlap_end = end.min(elem_end);
+            let overlap_cnt = overlap_end - overlap_start;
+
+            if overlap_cnt > 0 {
+                result.push_elem(CigarElem::new(elem.op, overlap_cnt));
+            }
+
+            current_idx = elem_end;
+
+            if current_idx >= end {
+                break;
+            }
+        }
+
+        result
+    }
 }
 
 #[cfg(test)]
@@ -724,5 +765,37 @@ mod tests {
         let encoded = bitcode::encode(&c);
         let decoded = bitcode::decode(&encoded).unwrap();
         assert_eq!(c, decoded);
+    }
+
+    #[test]
+    fn slice_basic_example() {
+        let cigar = Cigar::from_string("3=1X5=2X");
+        let sliced = cigar.slice(1, 7);
+        assert_eq!(sliced.to_string(), "2=1X3=");
+    }
+
+    #[test]
+    fn slice_empty() {
+        let cigar = Cigar::from_string("3=1X5=");
+        assert_eq!(cigar.slice(2, 2).to_string(), "");
+    }
+
+    #[test]
+    fn slice_full_range() {
+        let cigar = Cigar::from_string("3=1X5=");
+        assert_eq!(cigar.slice(0, 9).to_string(), "3=1X5=");
+    }
+
+    #[test]
+    fn slice_beyond_end() {
+        let cigar = Cigar::from_string("3=1X");
+        assert_eq!(cigar.slice(2, 10).to_string(), "1=1X");
+    }
+
+    #[test]
+    fn slice_with_indels() {
+        let cigar = Cigar::from_string("2=1I3=1D2=");
+        let sliced = cigar.slice(3, 8);
+        assert_eq!(sliced.to_string(), "3=1D1=");
     }
 }
